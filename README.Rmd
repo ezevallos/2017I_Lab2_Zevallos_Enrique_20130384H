@@ -221,11 +221,11 @@ Corre:
 require (ggplot2)
 ```
 
-```{r mpg}
+```{r eval = FALSE}
 ggplot (data = mpg)
 ```
 
-Notamos que no se grafica nada.
+Notamos que no se grafica nada. Encontraremos solo un rectángulo gris, en el que no se ha producido ninguna gráfica. 
 
 ### (b)
 ¿Cuántas filas hay en _mpg_? ¿Cuántas columnas?
@@ -245,15 +245,212 @@ Según la ayuda _?mpg_, la variable _drv_ nos indica si el automóvil es tracci�
 ### (d)
 Realizar un diagrama de dispersión entre _hwy_ y _cyl_ (es decir entre millas por galón en la carretera, y el número de cilindros)
 ```{r}
-e <- ggplot(mpg, aes(cyl, hwy))
-e + geom_jitter()
+e <- ggplot (mpg, aes (cyl, hwy))
+e + geom_point ()
 ```
 
+### (e)
 Ahora bien, nos piden explicar qué sucede si hacemos un diagrama de dispersión entre _class_ y _drv_. 
 ```{r eval = FALSE}
-p <- ggplot(mpg, aes(class, drv))
-p + geom_point()
+p <- ggplot (mpg, aes (class, drv))
+p + geom_point ()
 ```
 
-Esta gráfica carece de mucho sentido, ya que _class_ nos habla del **"tipo"** de carro, y generalmente esto nos da un indicio de la tracción. Por ende, es redundante y no agrega mucho valor.
+Esta gráfica carece de sentido, ya que ambas variables son categóricas, los puntos estarán sobrepuestos y por tanto solo visualizaremos cualquier variable con esa particular combinación de clases. El uso de geom_scatter debería arreglarlo.
+
+### (f)
+¿Qué ha salido mal en el siguiente código? ¿Por qué los puntos no son azules?
+```{r eval = FALSE}
+ggplot (data = mpg) + geom_point (mapping = aes (x = displ, y = hwy, color = "blue"))
+```
+
+Sorprendentemente, los puntos _no_ salen de color azul, sino rosado. Esto se debe a que "blue" está siendo interpretado como el vector c("blue") para mapear a estéticos como es el caso de _hwy_ y _displ_. Si deseamos que los puntos sean azules, debemos excluirlo del mapping, como sigue:
+```{r}
+ggplot (data = mpg) + geom_point (mapping = aes (x = displ, y = hwy), color = "blue")
+```
+
+### (g)
+¿Qué variables en mpg son categóricas? ¿Qué variables son continuas?
+Esta información la vemos simplemente ingresando el nombre del data-set:
+```{r}
+mpg
+```
+
+Como es fácil observar, las variables categóricas vienen a ser
+
++ manufacturer (fabricante)
++ model (nombre del modelo)
++ trans (tipo de transmisión)
++ drv (tipo de tracción)
++ fl (tipo de combustible)
+
+La única variable continua es displ (desplazamiento del motor, en litros). Los demás, year, cyl, cty y hwy toman valores discretos.
+
+### (h)
+Asigne una variable continua a **color**, **size**, y **shape**. ¿Cómo se comportan estas estéticas de manera diferente para variables categóricas y continuas?
+
++ **shape** no puede mapearse a una variable continua, ya que las formas no pueden ordenarse
++ **size** puede usarse para asignar un valor al tamaño de la marca en la gráfica
++ **color** puede asignarse para definir la saturación de una marca en la gráfica
+
+### (i)
+¿Qué sucede si se asigna la misma variable a estéticas múltiples?
+No hay ningún problema, por ejemplo, podemos asignar la **forma** y el **color** para una sola variable.
+
+### (j)
+¿Qué hace la estética **stroke**? ¿Con qué formas trabaja?
+Stroke maneja el grosor del borde para aquellas formas que tengan (borde).
+
+### (k)
+¿Qué sucede si se asigna una estética a algo que no sea un nombre de variable como aes (color = displ < 5)?
+Los mapeos estéticos son tratados como expresiones en el contexto de la _data_. Por tanto se evaluará la expresión, y se graficará el resultado.
+```{r}
+ggplot(data = mpg) + geom_point(aes(x = cty, y = hwy, color = displ < 5))
+```
+
+### (l)
+Usando facets...
+```{r}
+ggplot (data = mpg) + geom_point (mapping = aes (x = displ, y = hwy)) + facet_wrap (~ class, nrow = 2)
+```
+
+```{r}
+ggplot (data = mpg) + geom_point (mapping = aes (x = displ, y = hwy)) + facet_grid (drv ~ cyl)
+```
+
+* ¿Qué sucede si hace **facets** en una variable continua?
+Tendremos una fila o columna, por cada valor único que tome la variable. Esto puede resultar engorroso si la variable toma un gran rango de valores.
+
+* ¿Qué significan las celdas vacías en el gráfico con facet_grid (drv ~ cyl)?
+Significa que dicha combinación entre drv y cyl no se dio en el data-set.
+
+* ¿Cómo se relacionan con el gráfico siguiente?
+```{r}
+ggplot (data = mpg) + geom_point (mapping = aes (x = drv, y = cyl))
+```
+
+Se relaciona ya que el facet_grid generó una grilla de drv vs. cyl. Que posteriormente hemos graficado arriba. Observamos que coinciden las áreas con ocurrencias, y las áreas vacías ya que están íntimamente relacionados.
+
+* ¿Qué gráficos hace el siguiente código? ¿Qué hace el punto "."?
+```{r}
+ggplot (data = mpg) + geom_point (mapping = aes (x = displ, y = hwy)) + facet_grid (drv ~ .)
+```
+
+```{r}
+ggplot (data = mpg) + geom_point (mapping = aes (x = displ, y = hwy)) + facet_grid (. ~ cyl)
+```
+
+El punto sirve para que solo tengamos un _facet_ en una dimensión. Es necesario ya que las fórmulas de sólo un lado pueden resultar problemáticas a veces.
+
+### (m)
+Leer ?facet_wrap y contestar...
+
+* **¿Qué hace nrow?** Determina el número de filas.
+* **¿Qué hace ncol?** Determina el número de columnas.
+* **¿Qué otras opciones controlan la disposición gráfica?** La opción _dir_ .
+* **¿Qué hace que facet_grid no tenga los argumentos nrow y ncol?** El hecho que ya estén implicados debido a las variables de facetas.
+
+### (n)
+Cuando se utiliza facet_grid () normalmente se debe colocar la variable con más niveles únicos en las columnas. ¿Por qué?
+Esto es debido a que la mayoría de _displays_ son más anchos que altos.
+
+## Ejercicio 5
+### (a)
+¿Qué ocurre con un factor, cuando se modifica sus niveles?
+```{r}
+f1 <- factor (letters)
+f1
+levels (f1) <- rev (levels (f1))
+f1
+```
+
+El código anterior modifica los factores de _f1_ y los pone en reversa. Como podemos observar, rev ha revertido ambos el vector y los niveles. En este caso en particular, no habrá problema ya que los niveles en su totalidad son los mismos, pero habría que tener cuidado al agregar o quitar alguno.
+
+### (b)
+¿Qué hace este código? ¿Cómo difieren f2 y f3 de f1?
+```{r}
+f2 <- rev (factor (letters))
+f3 <- factor (letters, levels = rev (letters))
+```
+
+En f2, el factor revirtió al vector, pero los niveles se mantienen intactos. Imprimirá z y x... pero los niveles serán a b c... . En el caso de f3, este será un factor. Se revertirán los niveles, pero no el vector. Por tanto dará como resultado a b c..., con niveles x y z... . Como podemos observar, difiere del f1 que tuvo en una primera instancia un vector a b c... con niveles a b c... y luego un vector z y x... con niveles z y x... .
+
+### (c)
+¿Qué atributos posee un data frame?
+
+* names
+* col.names / row.names
+* class
+
+### (d)
+¿Qué hace as.matrix () cuando se aplica a un data frame con columnas de diferentes tipos?
+Los fuerza al mismo tipo, utilizando una serie de reglas de coerción.
+
+### (e)
+¿Se puede tener un data frame de datos con 0 filas? ¿ Qué hay de 0 columnas?
+Sí, es perfectamente factible tener un data frame completamente vacío.
+
+### (f)
+¿Qué devuelve _upper.tri_? ¿Cómo funciona para obtener subconjuntos de una matriz con esta función? ¿Necesitamos reglas de subconjunto adicionales para describir su comportamiento?
+Devuelve una matriz lógica del mismo tamaño de la matriz con resultado TRUE en el triángulo superior o inferior. La misma que es usada para obtener subconjuntos de la matriz. Al hacerlo, no necesitamos reglas adicionales de subconjuntos ya que se trata de vectores.
+
+### (g)
+Implemente su propia función que extrae las entradas diagonales de una matriz (Debe comportarse como diag (x) donde x es una matriz).
+```{r}
+n_diag <- function (m){
+  require(dplyr)
+  require(magrittr)
+
+  m %>%
+    ncol %>%
+    seq_len %>%
+    l(x -> cbind(x,x)) %>%
+    m[.]
+  }
+```
+
+### (h)
+¿Cómo cambiarías aleatoriamente las columnas de un data frame? (Esta es una técnica importante en los bosques aleatorios). ¿Puedes permutar las filas y las columnas simultáneamente en un solo paso?
+<!--```{r}
+
+#Cambiar aleatoriamente las columnas
+df [sample (ncol (df))]
+
+#Permutar aleatoriamente las columnas
+df [, sample (ncol (df))]
+
+#Permutar las filas y las columnas simultáneamente en un solo paso
+df [sample (nrow (df)), sample (ncol (df))]
+
+```-->
+
+###(i)
+¿Cómo seleccionarías una muestra aleatoria de _m_ filas de un data frame de datos? ¿Qué pasa si la muestra tiene que ser contigua (es decir, con una fila inicial, una fila final y cada fila entre ellas)?
+```{r}
+contig_samp <- function (df, m) {
+  df %>%
+    nrow %>%
+    subtract (m) %>%
+    sample (1) %>%
+    add (seq_len (m)) %>%
+    df [.,]
+}
+```
+
+### (j)
+¿Cómo podrías colocar las columnas en un data frame de datos en orden alfabético?
+
+```{r}
+mpg [order (names (mpg))]
+```
+
+### (k)
+Enumera tres formas en que un entorno difiere de una lista.
+
+* Todo debe tener un nombre único
+* Los entornos tienen ancestros
+* No existe un orden
+
+### (l)
+Usando parent.env () y un bucle (o una función recursiva), verifica que los predecesores de globalenv () incluyan baseenv () y emtpyenv (). Utiliza la misma idea básica para implementar tu propia versión de search ().
 
